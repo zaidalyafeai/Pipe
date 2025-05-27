@@ -2,11 +2,12 @@ from typing import Optional
 from dotenv import load_dotenv
 load_dotenv()
 
-from regression_head import RegressionHead
+from utils.regression_head import RegressionHead
 from datatrove.pipeline.base import PipelineStep
 from datatrove.pipeline.writers.disk_base import DiskWriter
 from datatrove.data import DocumentsPipeline, Document
 from datatrove.utils.batching import batched
+from transformers.utils.hub import cached_file
 import dataclasses
 import contextlib
 
@@ -49,8 +50,8 @@ class JQLAnnotator(PipelineStep, ABC):
 
     """
     
-    name = "📊 Edu-Score"
-    type = "🔢 - ANNOTATOR (TOKENIZER)"
+    name = "📊 Score"
+    type = "🔢 - JQL-ANNOTATOR"
 
     def __init__(
         self,
@@ -124,6 +125,13 @@ class JQLAnnotator(PipelineStep, ABC):
 
         # instantiate EMBEDDER
         embedder = get_embedder_instance(self.embedder_model_id, device, bfloat16)
+        if self.regression_head_checkpoints is None: 
+            self.regression_head_checkpoints = {
+                'Edu-JQL-Gemma-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-gemma-snowflake-balanced.ckpt'),
+                'Edu-JQL-Mistral-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-mistral-snowflake-balanced.ckpt'),
+                'Edu-JQL-Llama-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-llama-snowflake-balanced.ckpt'),
+            }
+            
         self.regression_heads = {}
         for name, path in self.regression_head_checkpoints.items():
             self.regression_heads[name] = RegressionHead.load_from_checkpoint(path, map_location=device).to(bfloat16)
