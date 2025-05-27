@@ -93,7 +93,15 @@ class JQLAnnotator(PipelineStep, ABC):
         super().__init__()
         
         self.embedder_model_id = embedder_model_id
-        self.regression_head_checkpoints = regression_head_checkpoints
+        if regression_head_checkpoints is None: 
+            logger.info('No custom regression heads specified. Using default JQL Edu heads.')
+            self.regression_head_checkpoints = {
+                'Edu-JQL-Gemma-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-gemma-snowflake-balanced.ckpt'),
+                'Edu-JQL-Mistral-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-mistral-snowflake-balanced.ckpt'),
+                'Edu-JQL-Llama-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-llama-snowflake-balanced.ckpt'),
+            }
+        else:
+            self.regression_head_checkpoints = regression_head_checkpoints
         self.batch_size = batch_size        
         self.device_overwrite = device_overwrite
         self.stats_writer = stats_writer
@@ -125,13 +133,7 @@ class JQLAnnotator(PipelineStep, ABC):
 
         # instantiate EMBEDDER
         embedder = get_embedder_instance(self.embedder_model_id, device, bfloat16)
-        if self.regression_head_checkpoints is None: 
-            logger.info('No custom regression heads specified. Using default JQL Edu heads.')
-            self.regression_head_checkpoints = {
-                'Edu-JQL-Gemma-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-gemma-snowflake-balanced.ckpt'),
-                'Edu-JQL-Mistral-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-mistral-snowflake-balanced.ckpt'),
-                'Edu-JQL-Llama-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-llama-snowflake-balanced.ckpt'),
-            }
+        
             
         self.regression_heads = {}
         for name, path in self.regression_head_checkpoints.items():
