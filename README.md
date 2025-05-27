@@ -71,16 +71,16 @@ regression_head_checkpoints = {
                 'Edu-JQL-Mistral-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-mistral-snowflake-balanced.ckpt'),
                 'Edu-JQL-Llama-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-llama-snowflake-balanced.ckpt'),
             }
-
+regression_heads = {}
 for name, path in regression_head_checkpoints.items():
-    regression_heads[name] = RegressionHead.load_from_checkpoint(path, map_location=device).to(bfloat16)
+    regression_heads[name] = RegressionHead.load_from_checkpoint(path, map_location=device).to(torch.bfloat16)
 
 # Given a single document
 doc = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua'
 embeddings = embedder.embed([doc])
 scores = {}
 with torch.no_grad():
-    for name, regression_head in self.regression_heads.items():
+    for name, regression_head in regression_heads.items():
         scores[f'score_{name}'] = regression_head(embeddings).cpu().squeeze(1)
 ```
 
