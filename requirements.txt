@@ -1,0 +1,7 @@
+flash-attn
+transformers==4.44.2
+wandb
+datatrove==0.4.0
+dotenv
+lightning
+orjson

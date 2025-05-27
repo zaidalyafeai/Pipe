@@ -55,7 +55,7 @@ class JQLAnnotator(PipelineStep, ABC):
 
     def __init__(
         self,
-        embedder_model_id: str,
+        embedder_model_id: str = 'Snowflake/snowflake-arctic-embed-m-v2.0',
         regression_head_checkpoints: Optional[dict[str, str]] = None,
         batch_size: int = 1_000,
         device_overwrite: Optional[str] = None,
@@ -94,6 +94,8 @@ class JQLAnnotator(PipelineStep, ABC):
         
         self.embedder_model_id = embedder_model_id
         if regression_head_checkpoints is None: 
+            if self.embedder_model_id != 'Snowflake/snowflake-arctic-embed-m-v2.0':
+                raise ValueError(f'No custom regression heads were specified, but default JQL Edu heads are not compatible with embedding model {self.embedder_model_id}.')
             logger.info('No custom regression heads specified. Using default JQL Edu heads.')
             self.regression_head_checkpoints = {
                 'Edu-JQL-Gemma-SF': cached_file('Jackal-AI/JQL-Edu-Heads', 'checkpoints/edu-gemma-snowflake-balanced.ckpt'),
