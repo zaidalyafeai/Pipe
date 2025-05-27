@@ -6,6 +6,7 @@ from regression_head import RegressionHead
 from datatrove.pipeline.base import PipelineStep
 from datatrove.pipeline.writers.disk_base import DiskWriter
 from datatrove.data import DocumentsPipeline, Document
+from datatrove.utils.batching import batched
 import dataclasses
 import contextlib
 
@@ -15,34 +16,7 @@ from datatrove.utils.logging import logger
 
 from utils.embedder import get_embedder_instance
 from abc import ABC
-
-
-# import torch
-# start_event = torch.cuda.Event(enable_timing=True)
-# end_event = torch.cuda.Event(enable_timing=True)
-
-
-# code taken from https://github.com/huggingface/datatrove/blob/main/src/datatrove/utils/batching.py
-# TODO: can get removed, once we update used datatrove version
-def batched(iterable, n):
-    """In python 3.12+ we could use itertools.batched instead
-
-    One difference with itertools.batched: we return a list instead of a tuple
-
-    Args:
-      iterable:
-      n:
-
-    Returns:
-
-    """
-    # batched('ABCDEFG', 3) --> ABC DEF G
-    if n < 1:
-        raise ValueError("n must be at least one")
-    it = iter(iterable)
-    while batch := list(itertools.islice(it, n)):
-        yield batch
-        
+       
         
 def stats_adapter(writer: DiskWriter, document: Document, expand_metadata=True) -> dict:
     """
