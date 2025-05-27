@@ -21,7 +21,7 @@ from abc import ABC
         
 def stats_adapter(writer: DiskWriter, document: Document, expand_metadata=True) -> dict:
     """
-    The datatrove adapter to write stats metadata in addition to 
+    The datatrove adapter to write stats metadata without the actual document text
 
     Args:
         writer: the diskwriter
@@ -70,15 +70,15 @@ class JQLAnnotator(PipelineStep, ABC):
                                      'Snowflake/snowflake-arctic-embed-m-v2.0').
                                      This model is responsible for converting text into
                                      numerical representations.
-            regression_head_checkpoints (dict[str, str]): A dictionary where keys are
+            regression_head_checkpoints (dict[str, str], optional): A dictionary where keys are
                                                           identifiers and values are file paths to the
                                                           PyTorch Lightning checkpoints
                                                           (.ckpt files) of the RegressionHead
                                                           model. Metadata names will be written based
                                                           on provided head names. If set to `None` will
                                                           load default regression heads from the JQL Paper.
-            batch_size (int, optional): The number of text samples to process in a single
-                                        batch during embedding and scoring. Larger batch
+            batch_size (int): The number of text samples to process in a single
+                                        batch during embedding and annotation. Larger batch
                                         sizes can improve throughput but require more memory.
                                         Defaults to 1,000.
             device_overwrite (str, optional): An optional string specifying the device
@@ -88,7 +88,7 @@ class JQLAnnotator(PipelineStep, ABC):
                                               all available GPUs.
             stats_writer (DiskWriter, optional): An instance of a DiskWriter (from Datatrove)
                                                 or a compatible class, used to log and save
-                                                document metadata seperately from the text.
+                                                document metadata seperately from the document text.
         """
         super().__init__()
         
