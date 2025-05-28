@@ -1,9 +1,6 @@
 from torch import nn
 import lightning as L
 
-from torch import nn
-import lightning as L
-
 class RegressionHead(L.LightningModule):
     """
     A simple regression head implemented as a LightningModule.
@@ -21,7 +18,7 @@ class RegressionHead(L.LightningModule):
                     configuration not shown.
     """
 
-    def __init__(self, input_dim, hidden_dim, learning_rate, train_sets):
+    def __init__(self, input_dim, hidden_dim, **kwargs):
         super().__init__()
         # First linear layer transforms input_dim features to hidden_dim features.
         self.layer1 = nn.Linear(input_dim, hidden_dim)
@@ -30,14 +27,6 @@ class RegressionHead(L.LightningModule):
         # Second linear layer transforms hidden_dim features to a single output (for regression).
         self.layer2 = nn.Linear(hidden_dim, 1)
         
-        # Store learning rate, typically used in the optimizer configuration (not shown here).
-        self.learning_rate = learning_rate        
-        # Store train_sets, though its direct use is not apparent in this class definition.
-        self.train_sets = train_sets
-        
-        # Saves the constructor arguments as hyperparameters, making them accessible
-        # for logging and checkpointing by PyTorch Lightning.
-        self.save_hyperparameters()
 
     def forward(self, x):
         """

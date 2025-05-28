@@ -66,8 +66,8 @@ class JQLAnnotator(PipelineStep, ABC):
 
         Args:
             embedder_model_id (str): The identifier for the multilingual embedding model
-                                     to be used (e.g., 'Alibaba-NLP/gte-multilingual-base',
-                                     'Snowflake/snowflake-arctic-embed-m-v2.0').
+                                     to be used ('Alibaba-NLP/gte-multilingual-base',
+                                     'Snowflake/snowflake-arctic-embed-m-v2.0', or 'jinaai/jina-embeddings-v3').
                                      This model is responsible for converting text into
                                      numerical representations.
             regression_head_checkpoints (dict[str, str], optional): A dictionary where keys are
