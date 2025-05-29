@@ -83,4 +83,33 @@ with torch.no_grad():
     for name, regression_head in regression_heads.items():
         scores[f'score_{name}'] = regression_head(embeddings).cpu().squeeze(1)
 ```
-
+## 📖 Citation
+Please cite as
+```bibtex
+@article{ali2025judging,
+    title     = {Judging Quality Across Languages: A Multilingual Approach to Pretraining Data Filtering with Language Models},
+    author    = {
+      Mehdi Ali,
+      Manuel Brack,
+      Max Lübbering,
+      Elias Wendt,
+      Abbas Goher Khan,
+      Richard Rutmann,
+      Alex Jude,
+      Maurice Kraus,
+      Alexander Arno Weber,
+      Felix Stollenwerk,
+      David Kaczér,
+      Florian Mai,
+      Lucie Flek,
+      Rafet Sifa,
+      Nicolas Flores-Herr,
+      Joachim Köhler,
+      Patrick Schramowski,
+      Michael Fromm,
+      Kristian Kersting
+    },
+    year      = {2025},
+    journal   = {arXiv preprint arXiv:2505:22232}
+  }
+```
