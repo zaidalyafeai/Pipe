@@ -4,7 +4,7 @@ load_dotenv()
 
 import torch.nn.functional as F
 import torch
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification
 
 
 class GteMultilingualBase():
@@ -205,7 +205,58 @@ class JinaEmbeddingsV3TextMatching():
         embeddings = torch.tensor(output).to(self.device, self.dtype)
         
         return embeddings
-    
+
+class BERTEmbeddings():
+    """
+    A wrapper class for the 'bert models' embedding model.
+
+
+    Attributes:
+        device (torch.device or str): The device on which to load the model.
+        dtype (torch.dtype): The data type for model computations (default: torch.bfloat16).
+        tokenizer (AutoTokenizer): The tokenizer for the Snowflake Arctic Embed model.
+        model (AutoModel): The loaded Snowflake Arctic Embed M v2.0 model.
+    """
+
+    def __init__(self, device, dtype=torch.bfloat16, compile=False):
+        """
+        Initializes the BERTEmbeddings model.
+
+        Args:
+            device (torch.device or str): The device to load the model onto.
+            dtype (torch.dtype, optional): The data type for model operations. Defaults to torch.bfloat16.
+            compile (bool, optional): Whether to compile the model's forward pass using `torch.compile`
+                                      for potential performance improvements. Defaults to False.
+        """
+        
+        self.device = device
+        self.dtype = dtype
+        
+        model_id = 'UBC-NLP/ARBERT'
+        
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+        self.model = AutoModel.from_pretrained(
+            model_id
+        ).to(device)
+
+    def embed(self, texts):
+        batch_tokens = self.tokenizer(
+            texts, 
+            max_length=512, 
+            padding='longest', 
+            truncation=True, 
+            return_tensors='pt'
+        ).to(self.device) # Move tokens to the specified device.
+
+        # Disable gradient calculation and ensure operations are on the correct CUDA device.
+        with torch.no_grad(), torch.cuda.device(self.device):      
+            output = self.model(**batch_tokens)
+
+            # Extract and normalize the embeddings.
+            embeddings = output.last_hidden_state[:, 0]
+            embeddings = F.normalize(embeddings, p=2, dim=1)
+
+        return embeddings 
     
 def get_embedder_instance(model_id, device, dtype):
     """
@@ -242,6 +293,9 @@ def get_embedder_instance(model_id, device, dtype):
     
     elif model_id == 'jinaai/jina-embeddings-v3':
         embedder_class = JinaEmbeddingsV3TextMatching
+    
+    elif model_id == 'UBC-NLP/ARBERT':
+        embedder_class = BERTEmbeddings
     
     else:
         raise ValueError(f"Unknown model ID: {model_id}")
