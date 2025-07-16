@@ -1,0 +1,1 @@
+huggingface-cli download google/gemma-3-27b-it --local-dir gemma-3-27b-it

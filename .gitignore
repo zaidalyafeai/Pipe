@@ -1,0 +1,5 @@
+*/*.ckpt
+lightning_logs/
+__pycache__/
+gemma-3-27b-it
+gemma-3-4b-it
