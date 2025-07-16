@@ -171,9 +171,9 @@ class Prompter():
         pbar = tqdm(iter(fw), total=self.num_examples)
         for example in pbar:
             examples.append(example)
-            if len(examples) > self.num_examples:
-                break
             pbar.set_description(f"Creating dataset: {len(examples)}/{self.num_examples}")
+            if len(examples) >= self.num_examples:
+                break
         return Dataset.from_list(examples)
     
     def wait_for_server(self):
@@ -201,6 +201,9 @@ class Prompter():
         self.wait_for_server()
         results = []
         pbar = tqdm(range(0, len(fw), batch_size))
+        # moving average of rps and tps
+        rps_list = []
+        tps_list = []
         for i in pbar:
             total_requests = 0
             total_tokens = 0
@@ -219,7 +222,10 @@ class Prompter():
             elapsed_time = time.time() - start_time
             rps = total_requests / elapsed_time  if elapsed_time > 0 else 0
             tps = total_tokens / elapsed_time if elapsed_time > 0 else 0
-            
+            rps_list.append(rps)
+            tps_list.append(tps)
+            rps = sum(rps_list) / len(rps_list)
+            tps = sum(tps_list) / len(tps_list)
             # Update progress bar description
             pbar.set_description(f"Processed: {i+len(batch)}/{len(fw)} | RPS: {rps:.2f} | TPS: {tps:.2f}")
             
