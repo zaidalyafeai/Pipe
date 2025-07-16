@@ -154,6 +154,8 @@ class Prompter():
         self.output_folder = os.path.join(output_path, self.generate_hash_filename())
         os.makedirs(self.output_folder, exist_ok=True)
         self.output_file = os.path.join(self.output_folder, "results.jsonl")
+        print(f"model: {model}", f"language: {language}", f"output_path: {self.output_file}")
+
         if not os.path.exists(self.output_file) or overwrite:
             with open(self.output_file, 'w') as f:
                 f.write("")
@@ -194,10 +196,12 @@ class Prompter():
         fw = fw.map(self.truncate, batched=True, batch_size=1000)
         if os.path.exists(self.output_file):
             # load the ids from the file
+            print(f"Loading {self.output_file}")
             with open(self.output_file, 'r') as f:
                 ids = [json.loads(line.strip())["id"] for line in f]
-            fw = fw.filter(lambda x: x["id"] not in ids)
-            print(f"Filtered dataset to {len(fw)} examples")
+            if len(ids) > 0:
+                fw = fw.filter(lambda x: x["id"] not in ids)
+                print(f"Filtered dataset to {len(fw)} examples")
         self.wait_for_server()
         results = []
         pbar = tqdm(range(0, len(fw), batch_size))
