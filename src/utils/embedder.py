@@ -163,7 +163,7 @@ class JinaEmbeddingsV3TextMatching():
         model (AutoModel): The loaded Jina Embeddings V3 model.
     """
 
-    def __init__(self, device, dtype=torch.bfloat16):
+    def __init__(self, device, dtype=torch.bfloat16, model_id=None):
         """
         Initializes the JinaEmbeddingsV3TextMatching model.
 
@@ -175,7 +175,8 @@ class JinaEmbeddingsV3TextMatching():
         self.device = device
         self.dtype = dtype
         
-        model_id = 'jinaai/jina-embeddings-v3'
+        if model_id is None:
+            model_id = 'jinaai/jina-embeddings-v3'
         
         # Load the Jina Embeddings V3 model.
         self.model = AutoModel.from_pretrained(
@@ -206,6 +207,7 @@ class JinaEmbeddingsV3TextMatching():
         
         return embeddings
 
+
 class BERTEmbeddings():
     """
     A wrapper class for the 'bert models' embedding model.
@@ -218,7 +220,7 @@ class BERTEmbeddings():
         model (AutoModel): The loaded Snowflake Arctic Embed M v2.0 model.
     """
 
-    def __init__(self, device, dtype=torch.bfloat16, compile=False):
+    def __init__(self, device, dtype=torch.bfloat16, compile=False, model_id=None):
         """
         Initializes the BERTEmbeddings model.
 
@@ -232,7 +234,8 @@ class BERTEmbeddings():
         self.device = device
         self.dtype = dtype
         
-        model_id = 'UBC-NLP/ARBERT'
+        if model_id is None:
+            model_id = 'UBC-NLP/ARBERT'
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.model = AutoModel.from_pretrained(
@@ -258,7 +261,7 @@ class BERTEmbeddings():
 
         return embeddings 
     
-def get_embedder_instance(model_id, device, dtype):
+def get_embedder_instance(model_id, device, dtype = torch.bfloat16):
     """
     Factory function to get an instance of a specified embedding model.
 
@@ -284,7 +287,7 @@ def get_embedder_instance(model_id, device, dtype):
     Raises:
         ValueError: If an unknown `model_id` is provided.
     """
-    
+    print(model_id)
     if model_id == 'Alibaba-NLP/gte-multilingual-base':
         embedder_class = GteMultilingualBase
     
@@ -294,8 +297,9 @@ def get_embedder_instance(model_id, device, dtype):
     elif model_id == 'jinaai/jina-embeddings-v3':
         embedder_class = JinaEmbeddingsV3TextMatching
     
-    elif model_id == 'UBC-NLP/ARBERT':
+    elif 'bert' in model_id.lower():
         embedder_class = BERTEmbeddings
+    
     
     else:
         raise ValueError(f"Unknown model ID: {model_id}")

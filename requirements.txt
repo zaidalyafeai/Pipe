@@ -5,3 +5,5 @@ datatrove==0.4.0
 dotenv
 lightning
 orjson
+tabulate
+einops

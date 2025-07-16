@@ -3,19 +3,23 @@ from torch.nn import functional as F
 from torch import nn
 from pytorch_lightning import LightningModule, Trainer
 from torch.utils.data import DataLoader
-from src.utils.embedder import BERTEmbeddings
+from src.utils.embedder import BERTEmbeddings, JinaEmbeddingsV3TextMatching
 from src.utils.regression_head import RegressionHead
 from datasets import load_from_disk, load_dataset
 import numpy as np
 import argparse
 from sklearn.metrics import f1_score
 from scipy.stats import spearmanr
+import multiprocessing
+# multiprocessing.set_start_method('spawn', force=True)
 
 class BERTClassifier(LightningModule):
-    def __init__(self, dataset=None, input_column="input_text", target_column="score"):
+    def __init__(self, dataset=None, input_column="input_text", target_column="score", base_model_name="UBC-NLP/ARBERT"):
         super().__init__()
-
-        self.embedder = BERTEmbeddings(device='cuda')
+        if 'jina' in base_model_name.lower():
+            self.embedder = JinaEmbeddingsV3TextMatching(device='cuda', model_id=base_model_name) 
+        else:
+            self.embedder = BERTEmbeddings(device='cuda', model_id=base_model_name) 
         output_dim = self.embedder.model.config.hidden_size
         self.regression_head = RegressionHead(input_dim=output_dim, hidden_dim=1024)        
         self.dataset = dataset
@@ -83,15 +87,19 @@ class BERTClassifier(LightningModule):
         return optimizer
 
     def tokenize_dataset(self, examples):
-        tokenized = self.embedder.tokenizer(
+        output = {}
+        tokenized = self.embedder.model.encode(
                 [example[self.input_column] for example in examples],
                 padding=True,
                 truncation=True,
                 max_length=512,
-                return_tensors='pt',
-            )
-        tokenized[self.target_column] = torch.tensor([example[self.target_column] for example in examples])
-        return tokenized
+                # return_tensors='pt',
+                task='text-matching')
+        output['input_ids'] = torch.tensor(tokenized, dtype=torch.long)
+        output['attention_mask'] = torch.ones_like(output['input_ids'], dtype=torch.long)
+        output['token_type_ids'] = torch.zeros_like(output['input_ids'], dtype=torch.long)
+        output[self.target_column] = torch.tensor([example[self.target_column] for example in examples])
+        return output
 
     def train_dataloader(self):
         return DataLoader(
@@ -99,7 +107,7 @@ class BERTClassifier(LightningModule):
             batch_size=256,
             shuffle=True,
             collate_fn=self.tokenize_dataset,
-            num_workers=4
+            num_workers=0
         )
 
     def val_dataloader(self):
@@ -119,7 +127,7 @@ class BERTClassifier(LightningModule):
             batch_size=128,
             shuffle=False,
             collate_fn=self.tokenize_dataset,
-            num_workers=4
+            num_workers=0
         )
 
     def test_dataloader(self):
@@ -128,7 +136,7 @@ class BERTClassifier(LightningModule):
             batch_size=128,
             shuffle=False,
             collate_fn=self.tokenize_dataset,
-            num_workers=4
+            num_workers=0
         )
     def on_save_checkpoint(self, checkpoint):
         checkpoint['state_dict'] = {k.replace('regression_head.', ''): v for k, v in checkpoint['state_dict'].items() if 'regression_head' in k}
@@ -138,13 +146,14 @@ class BERTClassifier(LightningModule):
 
 def main(args):
     dataset = load_from_disk(args.dataset_name)
-    dataset = dataset.map(lambda x: {args.target_column: np.clip(int(x[args.target_column]), 0, 5)}, num_proc=16)
+    dataset = dataset.map(lambda x: {args.target_column: np.clip(int(x[args.target_column]), 0, 5)}, num_proc=4)
     dataset = dataset.filter(lambda x: x[args.target_column] != 5)
     
     model = BERTClassifier(
         dataset=dataset, 
         input_column=args.input_column, 
-        target_column=args.target_column
+        target_column=args.target_column,
+        base_model_name=args.base_model_name
     )
 
     # gpu type detection
@@ -161,7 +170,8 @@ def main(args):
     trainer = Trainer(
         max_epochs=1,
         val_check_interval=500,
-        precision=precision    
+        precision=precision,
+        num_sanity_val_steps=0    
     )
     trainer.fit(model)
     trainer.save_checkpoint(f"{args.checkpoint_dir}/regression_head.ckpt")    
@@ -181,8 +191,9 @@ if __name__ == "__main__":
     parser.add_argument("--input_column", type=str, default="input_text")
     parser.add_argument("--target_column", type=str, default="score")
     parser.add_argument("--eval_only", action="store_true")
-    parser.add_argument("--checkpoint_dir", type=str, default="arbert_classifier")
     args = parser.parse_args()
-    args.dataset_name = f"{args.dataset_name}"
+    args.checkpoint_dir = args.base_model_name.replace('/', '__')
+    print(args)
+
     main(args)
 
