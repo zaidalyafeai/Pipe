@@ -207,6 +207,20 @@ class JinaEmbeddingsV3TextMatching():
         
         return embeddings
 
+    def tokenize(self, examples, input_column, max_length=512):
+        output = {}
+        tokenized = self.model.encode(
+                [example[input_column] for example in examples],
+                padding=True,
+                truncation=True,
+                max_length=max_length,
+                # return_tensors='pt',
+                task='text-matching')
+        output['input_ids'] = torch.tensor(tokenized, dtype=torch.long)
+        output['attention_mask'] = torch.ones_like(output['input_ids'], dtype=torch.long)
+        output['token_type_ids'] = torch.zeros_like(output['input_ids'], dtype=torch.long)
+        return output
+
 
 class BERTEmbeddings():
     """
@@ -259,8 +273,26 @@ class BERTEmbeddings():
             embeddings = output.last_hidden_state[:, 0]
             embeddings = F.normalize(embeddings, p=2, dim=1)
 
-        return embeddings 
-    
+        return embeddings
+
+    def tokenize(self, examples, input_column, max_length=512):
+        output = {}
+        texts = [example[input_column] for example in examples]
+        tokenized = self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            max_length=max_length,
+            return_tensors='pt'
+        )
+        output['input_ids'] = tokenized['input_ids']
+        output['attention_mask'] = tokenized['attention_mask']
+        # Handle token_type_ids - some models might not have them
+        if 'token_type_ids' in tokenized:
+            output['token_type_ids'] = tokenized['token_type_ids']
+        else:
+            output['token_type_ids'] = torch.zeros_like(output['input_ids'], dtype=torch.long)
+        return output
 def get_embedder_instance(model_id, device, dtype = torch.bfloat16):
     """
     Factory function to get an instance of a specified embedding model.
