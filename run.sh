@@ -1,1 +1,0 @@
-python train_classifier.py --base_model_name "jinaai/jina-embeddings-v3"
