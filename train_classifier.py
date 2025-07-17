@@ -201,7 +201,7 @@ def main(args):
     print(f"Using precision: {precision}")
     num_steps = len(dataset['train']) // args.train_batch_size
     trainer = Trainer(
-        max_epochs=1,
+        max_epochs=args.epochs,
         val_check_interval=num_steps // 4,
         precision=precision,
         num_sanity_val_steps=0    
@@ -223,6 +223,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_column", type=str, default="score")
     parser.add_argument("--train_batch_size", type=int, default=256)
     parser.add_argument("--eval_batch_size", type=int, default=128)
+    parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--eval_only", action="store_true")
     args = parser.parse_args()
     args.checkpoint_dir = args.base_model_name.replace('/', '__')+'@'+args.distilled_model_name.replace('/', '__')
