@@ -7,6 +7,8 @@ MODEL_NAME=$1
 GPU_COUNT=$2
 WORK_DIR="/ibex/ai/home/alyafez/JQL-Annotation-Pipeline"
 VENV_PATH="/ibex/ai/home/alyafez/.vllm/bin/activate"
+SHARD=$3
+NUM_SHARDS=$4
 cd ${WORK_DIR}
 source ${VENV_PATH}
 CMD="
@@ -18,12 +20,13 @@ CMD="
         --tensor-parallel-size ${GPU_COUNT} \
         --pipeline-parallel-size 1 \
         --max-model-len ${MAX_TOKENS} \
-        --max-num-seqs 100 \
-        --limit-mm-per-prompt image=0 \
-        --dtype=bfloat16 \
+        --max-num-seqs 50 \
+        --dtype=float16 \
+        --chat-template .qwen3-template.jinja \
 	    --served-model-name ${MODEL_NAME} 2>&1 > /dev/null
     "
 echo "Starting VLLM server on ${HOST}:${PORT}..."
-bash -c "${CMD}" & python score.py --mode vllm-online --model ${MODEL_NAME} --language ${LANGUAGE} --num-examples 50000 --batch-size 50 --max-tokens ${MAX_TOKENS}
+bash -c "${CMD}" & python synthesize.py --mode vllm --model ${MODEL_NAME} --num-examples 50000 --shard ${SHARD} --num-shards ${NUM_SHARDS} --batch-size 50 --max-tokens ${MAX_TOKENS} --output-path /ibex/ai/home/alyafez/.cache/jql-synthetic
 bash killall.sh
 exit 0
+
