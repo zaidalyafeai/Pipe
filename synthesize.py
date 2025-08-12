@@ -16,9 +16,15 @@ from glob import glob
 
 load_dotenv("../../.env")
 
-SYSTEM_PROMPT = """Below is an extract from a web page in 'English'. Please rephrase the extract in Arabic. You don't need to include a word by word translation.
-Do NOT include any other text in your response like "Here is the translation" or "Here is the rephrased text".
-This is an important step in the process of creating a dataset of educational content. The output text must be entirely in Arabic.
+SYSTEM_PROMPT = """
+You are given an extract from a webpage in Arabic:
+Write an informative and insightful blog post in Arabic that expands upon the extract above, within the context of the same topic.
+Your post should delve into the nuances of the topic, offering fresh perspectives and deeper analysis.
+Aim to:
+Inform: Provide valuable, well-researched information that educates the reader.
+Engage: Write in a conversational tone that connects with the audience, making complex ideas accessible.
+Illustrate: Use examples, anecdotes, or personal experiences to bring the topic to life. Do not give a title and do not start with sentences like "Have you ever..." or "Hello dear readers..", simply write the content without these introductory phrases.
+Extract: 
 """
 
 
@@ -277,7 +283,7 @@ def main():
     args.add_argument("--shard", type=int, default=0)
     args.add_argument("--num-shards", type=int, default=1)
     args = args.parse_args()
-    file_path = glob("/ibex/ai/project/c2254/english_raw_data/fineweb_edu/100BT/*.parquet")[args.shard % args.num_shards]
+    file_path = glob("/ibex/ai/project/c2254/arabic_filtered_data/fineweb2_arabic_threshold_2/data/arb_Arab/train/compressed/*.parquet")[args.shard % args.num_shards]
     fw = load_dataset("parquet", data_files=[file_path], split = f'train[:{args.num_examples}]')
     file_name = file_path.split("/")[-1].replace(".parquet", ".json")
     print(f"Processing {file_name}")
