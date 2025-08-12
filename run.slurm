@@ -17,4 +17,3 @@ cd ${WORK_DIR}
 source ${VENV_PATH}
 
 bash script.sh ${MODEL_NAME} ${GPU_COUNT} ${SLURM_ARRAY_TASK_ID} ${SLURM_ARRAY_TASK_COUNT}
-bash script.sh Qwen3-8B 2 0 140
